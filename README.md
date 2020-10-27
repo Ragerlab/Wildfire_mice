@@ -5,4 +5,4 @@
 
 ## DeSeq2 Analysis ('DeSeq2_102320')
 - filters lowly expressed genes
-- normalizing count data based on mean signal intensity to obtain variance stabilized expression values
+- normalizing count data based on median signal intensity to obtain variance stabilized expression values
