@@ -302,15 +302,23 @@ sapply(countdata, class)
 #################################################################################################
 
 # Here, let's just pull the IDs we're interested in:
-#coldata_sub <- coldata[which((coldata$Tissue == "Heart" & coldata$Treatment == "PeatFlame") | (coldata$Tissue == "Heart" & coldata$Treatment == "Saline")), ]  # first pulling a df
 #first run through comparing heart tissue exp. vs. heart tissue control
-coldata_sub <- coldata[which(coldata$Tissue == "Heart"), ]  # first pulling a df
-IDs_sub <- as.vector(coldata_sub$ID) # then just pulling the vector of IDs
-countdata_sub <- countdata[, colnames(countdata) %in% IDs_sub]
+coldata_sub1 <- coldata[which((coldata$Tissue == "Heart" & coldata$Treatment == "PeatFlame") | (coldata$Tissue == "Heart" & coldata$Treatment == "Saline")), ]  # first pulling a df
+coldata_sub2 <- coldata[which((coldata$Tissue == "Heart" & coldata$Treatment == "RedOakFlame") | (coldata$Tissue == "Heart" & coldata$Treatment == "Saline")), ]  # first pulling a df
+coldata_sub3 <- coldata[which((coldata$Tissue == "Heart" & coldata$Treatment == "RedOakSmolder") | (coldata$Tissue == "Heart" & coldata$Treatment == "Saline")), ]  # first pulling a df
+coldata_sub4 <- coldata[which((coldata$Tissue == "Heart" & coldata$Treatment == "PeatSmolder") | (coldata$Tissue == "Heart" & coldata$Treatment == "Saline")), ]  # first pulling a df
+IDs_sub1 <- as.vector(coldata_sub1$ID) # then just pulling the vector of IDs
+IDs_sub2 <- as.vector(coldata_sub2$ID) # then just pulling the vector of IDs
+IDs_sub3 <- as.vector(coldata_sub3$ID) # then just pulling the vector of IDs
+IDs_sub4 <- as.vector(coldata_sub4$ID) # then just pulling the vector of IDs
+countdata_sub1 <- countdata[, colnames(countdata) %in% IDs_sub1]
+countdata_sub2 <- countdata[, colnames(countdata) %in% IDs_sub2]
+countdata_sub3 <- countdata[, colnames(countdata) %in% IDs_sub3]
+countdata_sub4 <- countdata[, colnames(countdata) %in% IDs_sub4]
 
 # Check that these represent: mouse heart peat flame (MH113-MH118) and mouse heart saline samples (MH101-MH106)
 # Check that these represent: all heart tissue
-IDs_sub
+#IDs_sub
 
 
 
@@ -318,28 +326,44 @@ IDs_sub
 # Note in the design: last factor indicates the factor we want to test the effect of; the first factor(s) = factors we want to control for
 # Note that in this particular experiment, it gives us a warning that we are using integer data as numeric variables - this is what we want for some variables
 
-#dds = DESeqDataSetFromMatrix(countData = countdata_sub,
-                             #colData = coldata_sub,
-                             #design = ~Treatment_Tissue)
-dds = DESeqDataSetFromMatrix(countData = countdata_sub,
-                             colData = coldata_sub,
+dds1 = DESeqDataSetFromMatrix(countData = countdata_sub,
+                             colData = coldata_sub1,
                              design = ~Group)
+dds2 = DESeqDataSetFromMatrix(countData = countdata_sub,
+                              colData = coldata_sub2,
+                              design = ~Group)
+dds3 = DESeqDataSetFromMatrix(countData = countdata_sub,
+                              colData = coldata_sub3,
+                              design = ~Group)
+dds4 = DESeqDataSetFromMatrix(countData = countdata_sub,
+                              colData = coldata_sub4,
+                              design = ~Group)
 # View what the experiment contains
-dds
-
+dds1
+dds2
+dds3
+dds4
 
 
 # Let's also make sure that we have the main contrast is in the order we want to calculate appropriate fold change values
 # In this case, we want Treatment_Tissue= "Saline_Heart" as denominators (aka the "control" level), and Treatment_Tissue = "PeatFlame_Heart" as numerators
 #dds$Treatment_Tissue <- relevel (dds$Treatment_Tissue, "Saline_Heart")
-dds$Group = relevel(dds$Group, "Saline_24h_Heart")
+dds1$Group = relevel(dds1$Group, "Saline_24h_Heart")
+dds2$Group = relevel(dds2$Group, "Saline_24h_Heart")
+dds3$Group = relevel(dds3$Group, "Saline_24h_Heart")
+dds4$Group = relevel(dds4$Group, "Saline_24h_Heart")
 
 
 # Need to next, estimate the size factors, since size factors are used to normalize the counts (next step)
 # The "iterate" estimator iterates between estimating the dispersion with a design of ~1, and finding a size factor vector by numerically optimizing the likelihood of the ~1 model.
-dds <- estimateSizeFactors(dds)
-sizeFactors(dds) #check size factors
-
+dds1 <- estimateSizeFactors(dds1)
+sizeFactors(dds1) #check size factors
+dds2 <- estimateSizeFactors(dds2)
+sizeFactors(dds2) #check size factors
+dds3 <- estimateSizeFactors(dds3)
+sizeFactors(dds3) #check size factors
+dds4 <- estimateSizeFactors(dds4)
+sizeFactors(dds4) #check size factors
 
 
 
@@ -353,35 +377,68 @@ sizeFactors(dds) #check size factors
 
 
 # normalized counts:
-normcounts<- counts(dds, normalized=TRUE)
-write.csv(normcounts, paste0(Output,"/",cur_date, "_NormCounts.csv"), row.names=TRUE)
-
+normcounts1<- counts(dds1, normalized=TRUE)
+write.csv(normcounts1, paste0(Output,"/",cur_date, "_NormCounts_PeatFlame.csv"), row.names=TRUE)
+normcounts2<- counts(dds2, normalized=TRUE)
+write.csv(normcounts2, paste0(Output,"/",cur_date, "_NormCounts_RedOakFlame.csv"), row.names=TRUE)
+normcounts3<- counts(dds3, normalized=TRUE)
+write.csv(normcounts3, paste0(Output,"/",cur_date, "_NormCounts_RedOakSmolder.csv"), row.names=TRUE)
+normcounts4<- counts(dds4, normalized=TRUE)
+write.csv(normcounts4, paste0(Output,"/",cur_date, "_NormCounts_PeatSmolder.csv"), row.names=TRUE)
 
 # log2 pseudocounts (y=log2(n+1))
-log2normcounts <- log2(normcounts+1)
-write.csv(log2normcounts, paste0(Output,"/", cur_date,"_NormCounts_pslog2.csv"), row.names=TRUE)
+log2normcounts1 <- log2(normcounts1+1)
+write.csv(log2normcounts1, paste0(Output,"/", cur_date,"_NormCounts_pslog2_PeatFlame.csv"), row.names=TRUE)
+log2normcounts2 <- log2(normcounts2+1)
+write.csv(log2normcounts2, paste0(Output,"/", cur_date,"_NormCounts_pslog2RedOakFlame.csv"), row.names=TRUE)
+log2normcounts3 <- log2(normcounts3+1)
+write.csv(log2normcounts3, paste0(Output,"/", cur_date,"_NormCounts_pslog2_RedOakSmolder.csv"), row.names=TRUE)
+log2normcounts4 <- log2(normcounts4+1)
+write.csv(log2normcounts4, paste0(Output,"/", cur_date,"_NormCounts_pslog2_PeatSmolder.csv"), row.names=TRUE)
 
 
 # calculate the median across the normalized counts
-median(normcounts)
-
+median(normcounts1)
+median(normcounts2)
+median(normcounts3)
+median(normcounts4)
 
 # Background filter: note that this is a different approach than what we usually apply to human epi-based analyses
 # This is because of our variable contrasting conditions, cross-tissue analyses, etc
 # I also needed this here, because genes were being retained that were expressed at values of zero throughout this subset, which didn't allow for SVA
 # But this is actually the more commonly applied approach within DESeq2 examples
 # Here, remove rows with only zeros, or only a single count across all samples:
-idx <- rowSums(normcounts) > 1     # note that I've also seen a rowMeans > 1 filter applied here
-CountsAboveBack <- normcounts[idx,]
-nrow(CountsAboveBack)
-# Here, 22,912 genes were retained post-background filter (now only 24,749 genes)
+idx1 <- rowSums(normcounts1) > 1     # note that I've also seen a rowMeans > 1 filter applied here
+CountsAboveBack1 <- normcounts1[idx1,]
+nrow(CountsAboveBack1)
+# Here, 22,912 genes were retained post-background filter 
+idx2 <- rowSums(normcounts2) > 1     # note that I've also seen a rowMeans > 1 filter applied here
+CountsAboveBack2 <- normcounts2[idx2,]
+nrow(CountsAboveBack2)
+# Here, 22,912 genes were retained post-background filter 
+idx3 <- rowSums(normcounts3) > 1     # note that I've also seen a rowMeans > 1 filter applied here
+CountsAboveBack3 <- normcounts3[idx3,]
+nrow(CountsAboveBack3)
+# Here, 22,912 genes were retained post-background filter 
+idx4 <- rowSums(normcounts4) > 1     # note that I've also seen a rowMeans > 1 filter applied here
+CountsAboveBack4 <- normcounts4[idx4,]
+nrow(CountsAboveBack4)
+# Here, 22,912 genes were retained post-background filter 
 
-write.csv(CountsAboveBack, paste0(Output,"/", cur_date,"_NormCounts_AboveBack.csv"), row.names=TRUE)
-
+write.csv(CountsAboveBack1, paste0(Output,"/", cur_date,"_NormCounts_AboveBack_PeatFlame.csv"), row.names=TRUE)
+write.csv(CountsAboveBack2, paste0(Output,"/", cur_date,"_NormCounts_AboveBack_RedOakFlame.csv"), row.names=TRUE)
+write.csv(CountsAboveBack3, paste0(Output,"/", cur_date,"_NormCounts_AboveBack_RedOakSmolder.csv"), row.names=TRUE)
+write.csv(CountsAboveBack4, paste0(Output,"/", cur_date,"_NormCounts_AboveBack_PeatSmolder.csv"), row.names=TRUE)
 
 # Also need to filter in the entire DESeq2 experiment:
-dds <- dds[ rowSums(counts(dds, normalized=TRUE)) > 1, ]
-nrow(dds)
+dds1 <- dds1[ rowSums(counts(dds1, normalized=TRUE)) > 1, ]
+nrow(dds1)
+dds2 <- dds2[ rowSums(counts(dds2, normalized=TRUE)) > 1, ]
+nrow(dds2)
+dds3 <- dds3[ rowSums(counts(dds3, normalized=TRUE)) > 1, ]
+nrow(dds3)
+dds4 <- dds4[ rowSums(counts(dds4, normalized=TRUE)) > 1, ]
+nrow(dds4)
 # QC that 22912 genes are now included in the model (now 24,749)
 
 
@@ -394,19 +451,34 @@ nrow(dds)
 #################################################################################################
 
 # Running the differential expression statistical pipeline
-dds <- DESeq(dds, betaPrior=FALSE)      # because we used a user-defined model matrix, need to set betaPrior=FALSE
+#dds <- DESeq(dds, betaPrior=FALSE)      # because we used a user-defined model matrix, need to set betaPrior=FALSE
 # This ran a Wald test p-value (Treatment_Tissue = PeatFlame_Heart vs Saline_Heart)
+dds1 <- DESeq(dds1, betaPrior=FALSE)
+dds2 <- DESeq(dds2, betaPrior=FALSE)
+dds3 <- DESeq(dds3, betaPrior=FALSE)
+dds4 <- DESeq(dds4, betaPrior=FALSE)
 
-resultsNames(dds) #check the available comparisons
+resultsNames(dds1) #check the available comparisons
+resultsNames(dds2) #check the available comparisons
+resultsNames(dds3) #check the available comparisons
+resultsNames(dds4) #check the available comparisons
+
 
 # Pulling statistical results
-res <- results(dds, pAdjustMethod = "BH")  #Statistical output with multiple test correction by the default, BH (aka FDR)
-head(res)
-
+res1 <- results(dds1, pAdjustMethod = "BH")  #Statistical output with multiple test correction by the default, BH (aka FDR)
+head(res1)
+res2 <- results(dds2, pAdjustMethod = "BH")  #Statistical output with multiple test correction by the default, BH (aka FDR)
+head(res2)
+res3 <- results(dds3, pAdjustMethod = "BH")  #Statistical output with multiple test correction by the default, BH (aka FDR)
+head(res3)
+res4 <- results(dds4, pAdjustMethod = "BH")  #Statistical output with multiple test correction by the default, BH (aka FDR)
+head(res4)
 
 # Exporting statistical results:
-write.csv(as.data.frame(res)[order(res$padj),], paste0(Output,"/", cur_date,"_Stat_Results.csv"))
-
+write.csv(as.data.frame(res1)[order(res1$padj),], paste0(Output,"/", cur_date,"_Stat_Results_PeatFlame.csv"))
+write.csv(as.data.frame(res2)[order(res2$padj),], paste0(Output,"/", cur_date,"_Stat_Results_RedOakFlame.csv"))
+write.csv(as.data.frame(res3)[order(res3$padj),], paste0(Output,"/", cur_date,"_Stat_Results_RedOakSmolder.csv"))
+write.csv(as.data.frame(res4)[order(res4$padj),], paste0(Output,"/", cur_date,"_Stat_Results_PeatSmolder.csv"))
 
 
 
@@ -422,21 +494,40 @@ write.csv(as.data.frame(res)[order(res$padj),], paste0(Output,"/", cur_date,"_St
 ## "Capturing Heterogeneity in Gene Expression Studies by Surrogate Variable Analysis", Jeffrey T Leek,  John D Storey
 
 # First creating an additional experiment to run SVA through
-dds_SVA <- dds
+dds1_SVA <- dds1
+dds2_SVA <- dds2
+dds3_SVA <- dds3
+dds4_SVA <- dds4
 
 # Set the model matrix for what's being used to fit the data (minus the SVA variables)
-mod <- model.matrix(~Group, colData(dds_SVA))
+mod1 <- model.matrix(~Group, colData(dds1_SVA))
+mod2 <- model.matrix(~Group, colData(dds2_SVA))
+mod3 <- model.matrix(~Group, colData(dds3_SVA))
+mod4 <- model.matrix(~Group, colData(dds4_SVA))
 
 # Set the null model matrix being compared against when fitting the data for the SVA analysis
-mod0 <- model.matrix( ~1, colData(dds_SVA))
+mod0_1 <- model.matrix( ~1, colData(dds1_SVA))
+mod0_2 <- model.matrix( ~1, colData(dds2_SVA))
+mod0_3 <- model.matrix( ~1, colData(dds3_SVA))
+mod0_4 <- model.matrix( ~1, colData(dds4_SVA))
+
 
 
 # Calculated the number of significant surrogate variables, using the following code:
-svseq <- svaseq(CountsAboveBack, mod, mod0, n.sv=NULL)  
+svseq1 <- svaseq(CountsAboveBack1, mod1, mod0_1, n.sv=NULL)  
+# Here, we derive 4 significant SVs
+svseq2 <- svaseq(CountsAboveBack2, mod2, mod0_2, n.sv=NULL)  
+# Here, we derive 4 significant SVs
+svseq3 <- svaseq(CountsAboveBack3, mod3, mod0_3, n.sv=NULL)  
+# Here, we derive 4 significant SVs
+svseq4 <- svaseq(CountsAboveBack4, mod4, mod0_4, n.sv=NULL)  
 # Here, we derive 4 significant SVs
 
 # Running SVA, here, using number of SVs = 4
-svseq <- svaseq(CountsAboveBack, mod, mod0, n.sv=4)
+svseq1 <- svaseq(CountsAboveBack1, mod1, mod0_1, n.sv=4)
+svseq2 <- svaseq(CountsAboveBack2, mod2, mod0_2, n.sv=4)
+svseq3 <- svaseq(CountsAboveBack3, mod3, mod0_3, n.sv=4)
+svseq4 <- svaseq(CountsAboveBack4, mod4, mod0_4, n.sv=4)
 
 
 #################
@@ -444,20 +535,48 @@ svseq <- svaseq(CountsAboveBack, mod, mod0, n.sv=4)
 #################
 
 
-dds_SVA$SV1 <- svseq$sv[,1]
-dds_SVA$SV2 <- svseq$sv[,2]
-dds_SVA$SV3 <- svseq$sv[,3]
-dds_SVA$SV4 <- svseq$sv[,4]
-design(dds_SVA) <- ~ SV1 + SV2 + SV3 + SV4 + Group
+dds1_SVA$SV1 <- svseq1$sv[,1]
+dds1_SVA$SV2 <- svseq1$sv[,2]
+dds1_SVA$SV3 <- svseq1$sv[,3]
+dds1_SVA$SV4 <- svseq1$sv[,4]
+design(dds1_SVA) <- ~ SV1 + SV2 + SV3 + SV4 + Group
+
+dds2_SVA$SV1 <- svseq2$sv[,1]
+dds2_SVA$SV2 <- svseq2$sv[,2]
+dds2_SVA$SV3 <- svseq2$sv[,3]
+dds2_SVA$SV4 <- svseq2$sv[,4]
+design(dds2_SVA) <- ~ SV1 + SV2 + SV3 + SV4 + Group
+
+dds3_SVA$SV1 <- svseq3$sv[,1]
+dds3_SVA$SV2 <- svseq3$sv[,2]
+dds3_SVA$SV3 <- svseq3$sv[,3]
+dds3_SVA$SV4 <- svseq3$sv[,4]
+design(dds3_SVA) <- ~ SV1 + SV2 + SV3 + SV4 + Group
+
+dds4_SVA$SV1 <- svseq4$sv[,1]
+dds4_SVA$SV2 <- svseq4$sv[,2]
+dds4_SVA$SV3 <- svseq4$sv[,3]
+dds4_SVA$SV4 <- svseq4$sv[,4]
+design(dds4_SVA) <- ~ SV1 + SV2 + SV3 + SV4 + Group
 
 
 # Export variance stabilized counts, which will be influenced by the new design above
 # vsd will be useful for plots and future figure generation
-vsd <- varianceStabilizingTransformation(dds_SVA, blind=FALSE)
-vsd_matrix <-as.matrix(assay(vsd))
-write.csv(vsd_matrix, paste0(Output,"/", cur_date,"_VSDCounts_w_SVAs.csv"), row.names=TRUE)
+vsd1 <- varianceStabilizingTransformation(dds1_SVA, blind=FALSE)
+vsd_matrix1 <-as.matrix(assay(vsd1))
+write.csv(vsd_matrix1, paste0(Output,"/", cur_date,"_VSDCounts_w_SVAs_PeatFlame.csv"), row.names=TRUE)
 
+vsd2 <- varianceStabilizingTransformation(dds2_SVA, blind=FALSE)
+vsd_matrix2 <-as.matrix(assay(vsd2))
+write.csv(vsd_matrix2, paste0(Output,"/", cur_date,"_VSDCounts_w_SVAs_RedOakFlame.csv"), row.names=TRUE)
 
+vsd3 <- varianceStabilizingTransformation(dds3_SVA, blind=FALSE)
+vsd_matrix3 <-as.matrix(assay(vsd3))
+write.csv(vsd_matrix3, paste0(Output,"/", cur_date,"_VSDCounts_w_SVAs_RedOakSmolder.csv"), row.names=TRUE)
+
+vsd4 <- varianceStabilizingTransformation(dds4_SVA, blind=FALSE)
+vsd_matrix4 <-as.matrix(assay(vsd4))
+write.csv(vsd_matrix4, paste0(Output,"/", cur_date,"_VSDCounts_w_SVAs_PeatSmolder.csv"), row.names=TRUE)
 
 #################
 #### Evaluating variance stabilized values to guage whether SVs accounted for unwanted sources of variation between samples
@@ -484,15 +603,35 @@ plotPCA(vsd, intgroup="SV4", returnData=FALSE)
 #################################################################################################
 
 # Running the differential expression statistical pipeline
-dds_SVA <- DESeq(dds_SVA, betaPrior=FALSE)
+dds1_SVA <- DESeq(dds1_SVA, betaPrior=FALSE)
 
-resultsNames(dds_SVA) #check the available comparisons
+resultsNames(dds1_SVA) #check the available comparisons
+
+dds2_SVA <- DESeq(dds2_SVA, betaPrior=FALSE)
+
+resultsNames(dds2_SVA) #check the available comparisons
+
+dds3_SVA <- DESeq(dds3_SVA, betaPrior=FALSE)
+
+resultsNames(dds3_SVA) #check the available comparisons
+
+dds4_SVA <- DESeq(dds4_SVA, betaPrior=FALSE)
+
+resultsNames(dds4_SVA) #check the available comparisons
 
 # Pulling statistical results
-res <- results(dds_SVA, pAdjustMethod = "BH")
-head(res)
-
+res1 <- results(dds1_SVA, pAdjustMethod = "BH")
+head(res1)
+res2 <- results(dds2_SVA, pAdjustMethod = "BH")
+head(res2)
+res3 <- results(dds3_SVA, pAdjustMethod = "BH")
+head(res3)
+res4 <- results(dds4_SVA, pAdjustMethod = "BH")
+head(res4)
 
 # Exporting statistical results:
-write.csv(as.data.frame(res)[order(res$padj),], paste0(Output,"/",cur_date, "_Stat_Results_w_SVA.csv"))
+write.csv(as.data.frame(res1)[order(res1$padj),], paste0(Output,"/",cur_date, "_Stat_Results_w_SVA_PeatFlame.csv"))
+write.csv(as.data.frame(res2)[order(res2$padj),], paste0(Output,"/",cur_date, "_Stat_Results_w_SVA_RedOakFlame.csv"))
+write.csv(as.data.frame(res3)[order(res3$padj),], paste0(Output,"/",cur_date, "_Stat_Results_w_SVA_RedOakSmolder.csv"))
+write.csv(as.data.frame(res4)[order(res4$padj),], paste0(Output,"/",cur_date, "_Stat_Results_w_SVA_PeatSmolder.csv"))
 
