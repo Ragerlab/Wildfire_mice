@@ -10,7 +10,7 @@
 #### 
 #### 
 #### Code drafted by Alexis Payton and Julia Rager
-#### Lasted updated: November 18, 2020
+#### Lasted updated: December 11, 2020
 #################################################################################################
 #################################################################################################
 
@@ -73,7 +73,6 @@ library(gplots)
 library(RColorBrewer)
 library(data.table)
 library(tidyverse)
-library(readxl)
 
 
 #################################################################################################
@@ -89,7 +88,7 @@ getwd()
 # Create an output folder (make sure to make the folder first, and then point to it here)
 Output <- ("/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output")
 
-cur_date = "121020"
+cur_date = "121120"
 
 #################################################################################################
 #################################################################################################
@@ -115,16 +114,14 @@ summary(Dups)
 
 # Read in metadata (sample information file)
 subjectinfo <- read.csv(file = "Sample_Info_112520.csv", check.names = FALSE)
-dim(subjectinfo) #170 rows, 7 col
+dim(subjectinfo) #170 rows, 9 col
 
 # Visualize this data quickly by viewing top left corner:
 subjectinfo[1:3,1:7]
 
 #reading in table of contrasts 
-col_types = cols(
-  Tissue = col_factor(), Treatment = col_factor(), Timepoint = col_character(), Group = col_factor())
-contrasts = read_csv("Table_of_Contrasts_121020.csv", col_types = col_types)
-head(contrasts)
+cont = read_csv("Table_of_Contrasts_121120.csv")
+head(cont)
 
 #################################################################################################
 #################################################################################################
@@ -144,8 +141,8 @@ coldata <- subjectinfo
 
 # Set the rownames of coldata and column names of countdata to be in the same order 
 countdata <- setcolorder(countdata, as.character(coldata$ID))
-length(unique(colnames(countdata)))
-length(unique(coldata$ID))
+
+keep_samples <- keep_samples[! keep_samples %in% c("M112_RedOakFlame")]
 
 # Double checking that the same variables appear between the two dataframes
 setequal(as.character(coldata$ID), colnames(countdata))
@@ -307,142 +304,14 @@ sapply(countdata, class)
 #################################################################################################
 
 # Here, let's just pull the IDs we're interested in:
-heart_samples1 = c()
-heart_samples2 = c()
-heart_samples3 = c()
-heart_samples4 = c()
-lung_samples1_4h = c()
-lung_samples2_4h = c()
-lung_samples3_4h = c()
-lung_samples4_4h = c()
-lung_samples5_4h = c()
-lung_samples6_4h = c()
-lung_samples7_4h = c()
-lung_samples8_4h = c()
-lung_samples9_4h = c()
-lung_samples10_4h = c()
-lung_samples11_4h = c()
-lung_samples1_24h = c()
-lung_samples2_24h = c()
-lung_samples3_24h = c()
-lung_samples4_24h = c()
-lung_samples5_24h = c()
-lung_samples6_24h = c()
-lung_samples7_24h = c()
-lung_samples8_24h = c()
-lung_samples9_24h = c()
-lung_samples10_24h = c()
-lung_samples11_24h = c()
-
-#could probably do this easier using dplyr
-for (i in 1:length(coldata$ID)){
-  for (j in 1:length(contrasts$Tissue)){
-    #getting heart first
-    if (coldata$Group[i] == contrasts$Group[j] & coldata$Tissue[i] == 'Heart'){
-      if(contrasts$Treatment[j] == 'RedOakFlame'| coldata$Group[i] == contrasts$Group[j] & coldata$Group[i] == 'Saline_24h_Heart'){
-        heart_samples1 = c(heart_samples1, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'PeatFlame'| coldata$Group[i] == contrasts$Group[j] & coldata$Group[i] == 'Saline_24h_Heart'){
-        heart_samples2 = c(heart_samples2, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'RedOakSmolder'| coldata$Group[i] == contrasts$Group[j] & coldata$Group[i] == 'Saline_24h_Heart'){
-        heart_samples3 = c(heart_samples3, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'PeatSmolder'| coldata$Group[i] == contrasts$Group[j] & coldata$Group[i] == 'Saline_24h_Heart'){
-        heart_samples4 = c(heart_samples4, coldata$ID[i])
-      }
-    }
-    #getting lung samples (4h)
-    if (coldata$Group[i] == contrasts$Group[j] & coldata$Tissue[i] == 'Lung' & contrasts$Timepoint[j] == '4h'){
-      if(contrasts$Treatment[j] == 'RedOakFlame'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples1_4h = c(lung_samples1_4h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'PeatFlame'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples2_4h = c(lung_samples2_4h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'RedOakSmolder'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples3_4h = c(lung_samples3_4h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'PeatSmolder'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples4_4h = c(lung_samples4_4h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'PineNeedlesSmolder'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples5_4h = c(lung_samples5_4h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'PineSmolder'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples6_4h = c(lung_samples6_4h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'EucalyptusSmolder'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples7_4h = c(lung_samples7_4h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'PineNeedlesFlame'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples8_4h = c(lung_samples8_4h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'PineFlame'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples9_4h = c(lung_samples9_4h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'EucalyptusFlame'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples10_4h = c(lung_samples10_4h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'LPS'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples11_4h = c(lung_samples11_4h, coldata$ID[i])
-      }
-    }
-    #getting lung samples (24h)
-    if (coldata$Group[i] == contrasts$Group[j] & coldata$Tissue[i] == 'Lung' & contrasts$Timepoint[j] == '24h'){
-      if(contrasts$Treatment[j] == 'RedOakFlame'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples1_24h = c(lung_samples1_24h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'PeatFlame'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples2_24h = c(lung_samples2_24h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'RedOakSmolder'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples3_24h = c(lung_samples3_24h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'PeatSmolder'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples4_24h = c(lung_samples4_24h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'PineNeedlesSmolder'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples5_24h = c(lung_samples5_24h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'PineSmolder'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples6_24h = c(lung_samples6_24h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'EucalyptusSmolder'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples7_24h = c(lung_samples7_24h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'PineNeedlesFlame'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples8_24h = c(lung_samples8_24h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'PineFlame'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples9_24h = c(lung_samples9_24h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'EucalyptusFlame'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples10_24h = c(lung_samples10_24h, coldata$ID[i])
-      }
-      if(contrasts$Treatment[j] == 'LPS'| contrasts$Timepoint[j] == coldata$Timepoint[i] & contrasts$Treatment[j] == 'Saline'){
-        lung_samples11_24h = c(lung_samples11_24h, coldata$ID[i])
-      }
-    }
-  }
-}
-
-#contains a list of samples for each comparison
-#CHECK THIS BECAUSE SOME SAMPLES ARE MISSING!  
-heart_samples_list = list(heart_samples1, heart_samples2, heart_samples3, heart_samples4)
-lung_samples_list = list(lung_samples1_4h, lung_samples2_4h,
-                    lung_samples3_4h, lung_samples4_4h, lung_samples5_4h, lung_samples6_4h, lung_samples7_4h,
-                    lung_samples8_4h, lung_samples9_4h, lung_samples10_4h, lung_samples11_4h, lung_samples1_24h, 
-                    lung_samples2_24h, lung_samples3_24h, lung_samples4_24h, lung_samples5_24h, lung_samples6_24h, 
-                    lung_samples7_24h, lung_samples8_24h, lung_samples9_24h, lung_samples10_24h, lung_samples11_24h)
-
 
 
 #start of running to loop to compare all samples
-deseq2_experiment = function(list_of_samples, tx_tissue){ #call: deseq2_experiment(heart_samples_list, "Saline_Heart")
-  for (i in 1:length(list_of_samples)){
-    countdata_sub = countdata[, colnames(countdata) %in% list_of_samples[[i]]]
-    coldata_sub = coldata[coldata$ID %in% list_of_samples[[i]],]
+
+for (i in 1:length(coldata$ID)){
+  for (j in 1:length(cont$Group)){
+    coldata_sub = coldata[coldata$Group %in% c(cont$Group[j], cont$Control[j]),]
+    countdata_sub = countdata[, colnames(countdata) %in% coldata_sub$ID]
 
 
 # Create the final DESeq2 experiment, with appropriate experimental design:
@@ -459,7 +328,7 @@ deseq2_experiment = function(list_of_samples, tx_tissue){ #call: deseq2_experime
 
 
 # Let's also make sure that we have the main contrast is in the order we want to calculate appropriate fold change values
-    dds$Group <- relevel (dds$Group, tx_tissue)
+    dds$Group <- relevel (dds$Group, cont$Control[j])
 
 
 
@@ -467,8 +336,8 @@ deseq2_experiment = function(list_of_samples, tx_tissue){ #call: deseq2_experime
 # The "iterate" estimator iterates between estimating the dispersion with a design of ~1, and finding a size factor vector by numerically optimizing the likelihood of the ~1 model.
     dds <- estimateSizeFactors(dds)
     sizeFactors(dds) #check size factors
-  
-
+  } 
+}
     
 #################################################################################################
 #################################################################################################
@@ -481,21 +350,18 @@ deseq2_experiment = function(list_of_samples, tx_tissue){ #call: deseq2_experime
 
 # normalized counts:
     normcounts<- counts(dds, normalized=TRUE)
-    write.csv(normcounts, paste0(Output,"/",cur_date, "_NormCounts_PeatFlame.csv"), row.names=TRUE)
+    write.csv(normcounts, paste0(Output,"/",cur_date, "_NormCounts_", cont$Group[j] ,".csv"), row.names=TRUE)
     
     
 # log2 pseudocounts (y=log2(n+1))
     log2normcounts <- log2(normcounts+1)
-    write.csv(log2normcounts, paste0(Output,"/",cur_date, "_NormCounts_PeatFlame.csv"), row.names=TRUE)
+    write.csv(log2normcounts, paste0(Output,"/",cur_date, "_NormCounts_", cont$Group[j] , ".csv"), row.names=TRUE)
     
     
 # calculate the median across the normalized counts
-    return(median(normcounts))
-    
-  }
-}
+    median(normcounts)
 
-deseq2_experiment(heart_samples_list, "Saline_24h_Heart")
+
 
 
   # Background filter: note that this is a different approach than what we usually apply to human epi-based analyses
