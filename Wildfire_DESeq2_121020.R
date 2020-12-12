@@ -87,8 +87,11 @@ getwd()
 
 # Create an output folder (make sure to make the folder first, and then point to it here)
 Output <- ("/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output")
-
-cur_date = "121120"
+Output_Normalized_Counts = ("/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output/1_NormCounts")
+Output_Normalized_Counts_pslog2 = ("/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output/2_NormCounts_pslog2")
+Output_Normalized_Counts_AB = ("/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output/3_NormCounts_AboveBack")
+Output_StatResults = ("/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output/4_StatResults")
+cur_date = "121220"
 
 #################################################################################################
 #################################################################################################
@@ -99,7 +102,7 @@ cur_date = "121120"
 
 
 # Read in count data
-countdata <- read.csv(file = 'Wildfire_GeneCounts_102320.csv', check.names = FALSE)
+countdata <- read.csv(file = 'SP0222_gene_counts.csv', check.names = FALSE)
 dim(countdata)
 # 171 samples, 30146 mRNAs
 
@@ -120,8 +123,8 @@ dim(subjectinfo) #170 rows, 9 col
 subjectinfo[1:3,1:7]
 
 #reading in table of contrasts 
-cont = read_csv("Table_of_Contrasts_121120.csv")
-head(cont)
+contrasts = read_csv("Table_of_Contrasts_121120.csv")
+head(contrasts)
 
 #################################################################################################
 #################################################################################################
@@ -140,9 +143,15 @@ coldata <- subjectinfo
 
 
 # Set the rownames of coldata and column names of countdata to be in the same order 
-countdata <- setcolorder(countdata, as.character(coldata$ID))
-
-keep_samples <- keep_samples[! keep_samples %in% c("M112_RedOakFlame")]
+countdata <- setcolorder(countdata, as.character(coldata$SampleID_BioSpyderCountFile))
+#replacing the biospyder ids in the countdata file with the ids
+for (i in 1:length(countdata)){
+  for (j in 1:length(coldata$SampleID_BioSpyderCountFile)){
+    if(colnames(countdata)[i] == coldata$SampleID_BioSpyderCountFile[j]){
+      colnames(countdata)[i] = coldata$ID[j]
+    }
+  }
+}
 
 # Double checking that the same variables appear between the two dataframes
 setequal(as.character(coldata$ID), colnames(countdata))
@@ -296,31 +305,27 @@ sapply(countdata, class)
 
 
 
-# ALEXIS THIS IS WHERE WE NEED TO START EDITING
+
 #################################################################################################
 #### Creating a subset of the data to contrast
 #### ALEXIS- we'll need to modify this code, such that is runs all contrasts we want together
 #### I think we'll need to pull in a list of specific contrasts... trying to remember...
 #################################################################################################
 
-# Here, let's just pull the IDs we're interested in:
-
 
 #start of running to loop to compare all samples
-
-for (i in 1:length(coldata$ID)){
-  for (j in 1:length(cont$Group)){
-    coldata_sub = coldata[coldata$Group %in% c(cont$Group[j], cont$Control[j]),]
-    countdata_sub = countdata[, colnames(countdata) %in% coldata_sub$ID]
+for (i in 1:length(contrasts$Group)){
+  coldata_sub = coldata[coldata$Group %in% c(contrasts$Group[i], contrasts$Control[i]),]
+  countdata_sub = countdata[, colnames(countdata) %in% coldata_sub$ID]
 
 
 # Create the final DESeq2 experiment, with appropriate experimental design:
 # Note in the design: last factor indicates the factor we want to test the effect of; the first factor(s) = factors we want to control for
 # Note that in this particular experiment, it gives us a warning that we are using integer data as numeric variables - this is what we want for some variables
 
-    dds = DESeqDataSetFromMatrix(countData = countdata_sub,
-                                 colData = coldata_sub,
-                                 design = ~Group)
+  dds = DESeqDataSetFromMatrix(countData = countdata_sub,
+                                colData = coldata_sub,
+                                design = ~Group)
 
 # View what the experiment contains
 #dds
@@ -328,16 +333,15 @@ for (i in 1:length(coldata$ID)){
 
 
 # Let's also make sure that we have the main contrast is in the order we want to calculate appropriate fold change values
-    dds$Group <- relevel (dds$Group, cont$Control[j])
+  dds$Group <- relevel (dds$Group, contrasts$Control[i])
 
 
 
 # Need to next, estimate the size factors, since size factors are used to normalize the counts (next step)
 # The "iterate" estimator iterates between estimating the dispersion with a design of ~1, and finding a size factor vector by numerically optimizing the likelihood of the ~1 model.
-    dds <- estimateSizeFactors(dds)
-    sizeFactors(dds) #check size factors
-  } 
-}
+  dds <- estimateSizeFactors(dds)
+    #sizeFactors(dds) #check size factors
+
     
 #################################################################################################
 #################################################################################################
@@ -349,19 +353,20 @@ for (i in 1:length(coldata$ID)){
 
 
 # normalized counts:
-    normcounts<- counts(dds, normalized=TRUE)
-    write.csv(normcounts, paste0(Output,"/",cur_date, "_NormCounts_", cont$Group[j] ,".csv"), row.names=TRUE)
+  normcounts<- counts(dds, normalized=TRUE)
+    
+  write.csv(normcounts, paste0(Output_Normalized_Counts,"/",cur_date, "_NormCounts_", contrasts$Group[i] ,".csv"), row.names=TRUE)
     
     
 # log2 pseudocounts (y=log2(n+1))
-    log2normcounts <- log2(normcounts+1)
-    write.csv(log2normcounts, paste0(Output,"/",cur_date, "_NormCounts_", cont$Group[j] , ".csv"), row.names=TRUE)
+  log2normcounts <- log2(normcounts+1)
+  write.csv(log2normcounts, paste0(Output_Normalized_Counts_pslog2,"/",cur_date, "_NormCounts_pslog2_", contrasts$Group[i] , ".csv"), row.names=TRUE)
     
     
 # calculate the median across the normalized counts
-    median(normcounts)
+  #median(normcounts)
 
-
+  
 
 
   # Background filter: note that this is a different approach than what we usually apply to human epi-based analyses
@@ -369,16 +374,16 @@ for (i in 1:length(coldata$ID)){
   # I also needed this here, because genes were being retained that were expressed at values of zero throughout this subset, which didn't allow for SVA
   # But this is actually the more commonly applied approach within DESeq2 examples
   # Here, remove rows with only zeros, or only a single count across all samples:
-  idx <- rowSums(normcounts) > 1     # note that I've also seen a rowMeans > 1 filter applied here
-  CountsAboveBack <- normcounts[idx,]
-  nrow(CountsAboveBack)
-  
-  write.csv(CountsAboveBack, paste0(Output,"/", "NormCounts_AboveBack.csv"), row.names=TRUE)
-  
-  
-  # Also need to filter in the entire DESeq2 experiment:
-  dds <- dds[ rowSums(counts(dds, normalized=TRUE)) > 1, ]
-  nrow(dds)
+    idx <- rowSums(normcounts) > 1     # note that I've also seen a rowMeans > 1 filter applied here
+    CountsAboveBack <- normcounts[idx,]
+    #nrow(CountsAboveBack)
+    
+    write.csv(CountsAboveBack, paste0(Output_Normalized_Counts_AB,"/", cur_date, "NormCounts_AboveBack_", contrasts$Group[i] ,".csv"), row.names=TRUE)
+    
+    
+    # Also need to filter in the entire DESeq2 experiment:
+    dds <- dds[ rowSums(counts(dds, normalized=TRUE)) > 1, ]
+  #nrow(dds)
 
 
 
@@ -390,21 +395,21 @@ for (i in 1:length(coldata$ID)){
 #################################################################################################
 
 # Running the differential expression statistical pipeline
-dds <- DESeq(dds, betaPrior=FALSE)      # because we used a user-defined model matrix, need to set betaPrior=FALSE
-# This ran a Wald test p-value (Treatment_Tissue = PeatFlame_Heart vs Saline_Heart)
+    dds <- DESeq(dds, betaPrior=FALSE)      # because we used a user-defined model matrix, need to set betaPrior=FALSE
+    # This ran a Wald test p-value (Treatment_Tissue = PeatFlame_Heart vs Saline_Heart)
+    
+    resultsNames(dds) #check the available comparisons
+    
+    # Pulling statistical results
+    res <- results(dds, pAdjustMethod = "BH")  #Statistical output with multiple test correction by the default, BH (aka FDR)
+    #head(res)
+    
+    
+    # Exporting statistical results:
+    write.csv(as.data.frame(res)[order(res$padj),], paste0(Output_StatResults,"/", cur_date, "Stat_Results_", contrasts$Group[i] ,".csv"))
 
-resultsNames(dds) #check the available comparisons
 
-# Pulling statistical results
-res <- results(dds, pAdjustMethod = "BH")  #Statistical output with multiple test correction by the default, BH (aka FDR)
-head(res)
-
-
-# Exporting statistical results:
-write.csv(as.data.frame(res)[order(res$padj),], paste0(Output,"/", "Stat_Results.csv"))
-
-
-
+}
 
 
 
@@ -412,6 +417,7 @@ write.csv(as.data.frame(res)[order(res$padj),], paste0(Output,"/", "Stat_Results
 #################################################################################################
 #################################################################################################
 #### Surrogate variable analysis (SVA) to capture potential variances between samples (including sample / cell type heterogeneity)
+#### Ending up not including in the final wildfire analysis
 #################################################################################################
 #################################################################################################
 ## For more information: https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0030161
