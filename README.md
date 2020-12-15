@@ -6,4 +6,4 @@
 ## DeSeq2 Analysis
 - filters lowly expressed genes
 - normalizing count data based on median signal intensity to obtain variance stabilized expression values
-- <i> Last Updated: November 2, 2020. </i>
+- <i> Last Updated: December 14, 2020. </i>
