@@ -86,12 +86,14 @@ setwd('/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/De
 getwd()
 
 # Create an output folder (make sure to make the folder first, and then point to it here)
-Output <- ("/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output")
-Output_Normalized_Counts = ("/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output/1_NormCounts")
-Output_Normalized_Counts_pslog2 = ("/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output/2_NormCounts_pslog2")
-Output_Normalized_Counts_AB = ("/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output/3_NormCounts_AboveBack")
-Output_StatResults = ("/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output/4_StatResults")
-cur_date = "121220"
+Output <- "/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output"
+Output_Normalized_Counts = "/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output/1_NormCounts"
+Output_Normalized_Counts_pslog2 = "/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output/2_NormCounts_pslog2"
+Output_Normalized_Counts_AB = "/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output/3_NormCounts_AboveBack"
+Output_StatResults = "/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output/4_StatResults"
+Output_VSD = "/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output/5_VSD_w_SVA"
+Output_StatResults_SVA = "/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/DeSeq2/2_Output/6_StatResults_w_SVA"
+cur_date = "121320"
 
 #################################################################################################
 #################################################################################################
@@ -191,7 +193,7 @@ pca_percent <- round(100*pca$sdev^2/sum(pca$sdev^2),1)
 ggplot(pca_df, aes(PC1,PC2, color = PlateBatch))+
   geom_point(size=6) +
   labs(x=paste0("PC1 (",pca_percent[1],"%)"), y=paste0("PC2 (",pca_percent[2],"%)"))
-dev.copy(png,paste0(Output,"/", "PCA_PlateBatch.png"))
+dev.copy(png,paste0(Output,"/", cur_date,"PCA_PlateBatch.png"))
 dev.off()
 
 
@@ -199,7 +201,7 @@ dev.off()
 ggplot(pca_df, aes(PC1,PC2, color = Treatment))+
   geom_point(size=6) +
   labs(x=paste0("PC1 (",pca_percent[1],"%)"), y=paste0("PC2 (",pca_percent[2],"%)"))
-dev.copy(png,paste0(Output,"/", "PCA_Treatment.png"))
+dev.copy(png,paste0(Output,"/", cur_date,"PCA_Treatment.png"))
 dev.off()
 
 
@@ -207,7 +209,7 @@ dev.off()
 ggplot(pca_df, aes(PC1,PC2, color = Tissue))+
   geom_point(size=6) +
   labs(x=paste0("PC1 (",pca_percent[1],"%)"), y=paste0("PC2 (",pca_percent[2],"%)"))
-dev.copy(png,paste0(Output,"/", "PCA_Tissue.png"))
+dev.copy(png,paste0(Output,"/", cur_date,"PCA_Tissue.png"))
 dev.off()
 # all the heart samples seem to be grouped together, whcih makes sense
 # lung samples display more variance than heart - so we may want to capture unwanted variance through SVA or RUV techniques
@@ -217,7 +219,7 @@ dev.off()
 ggplot(pca_df, aes(PC1,PC2))+
   geom_text(aes(label=Sample, size=3)) +
   labs(x=paste0("PC1 (",pca_percent[1],"%)"), y=paste0("PC2 (",pca_percent[2],"%)"))
-dev.copy(png,paste0(Output,"/", "PCA_IDsLabeled.png"))
+dev.copy(png,paste0(Output,"/", cur_date,"PCA_IDsLabeled.png"))
 dev.off()
 
 # This would suggest that M112_RedOakFlame may be a potential outlier, but we can investigate further
@@ -246,26 +248,27 @@ dev.off()
 #################################################################################################
 
 # Since this is the first time we've filtered out a sample (unlike the ELGAN code) we need to set up vectors of IDs to keep, and then run a filter
+# This step wasn't needed for this data set
 
 # First, pull all the IDs from the count data
-keep_samples <- colnames(countdata)
+#keep_samples <- colnames(countdata)
 # Note that in this case, this represents all 170 IDs
 
 # Then, remove the one sample outlier from the "keep_samples" vectors
-keep_samples <- keep_samples[! keep_samples %in% c("M112_RedOakFlame")]
+#keep_samples <- keep_samples[! keep_samples %in% c("M112_RedOakFlame")]
 # Note that this represents all remaining 169 IDs
 
 # Filter the countdata dataframe for these IDs
-countdata <- countdata[, colnames(countdata) %in% keep_samples]
-countdata[1:5, 1:10]
+#countdata <- countdata[, colnames(countdata) %in% keep_samples]
+#countdata[1:5, 1:10]
 
 # Filter the coldata dataframe for these IDs
-coldata <- coldata[coldata$ID %in% keep_samples, ]
+#coldata <- coldata[coldata$ID %in% keep_samples, ]
 
 
 # Export the raw data for just the included samples to potentially generate plots outside of R
-write.csv(countdata, paste0(Output,"/", "RawCounts_SamplesIncluded.csv"), row.names= TRUE)
-write.csv(coldata, paste0(Output,"/", "SampleInfo_SamplesIncluded.csv"), row.names= FALSE)
+write.csv(countdata, paste0(Output,"/", cur_date, "RawCounts_SamplesIncluded.csv"), row.names= TRUE)
+write.csv(coldata, paste0(Output,"/", cur_date, "SampleInfo_SamplesIncluded.csv"), row.names= FALSE)
 
 
 
@@ -313,7 +316,7 @@ sapply(countdata, class)
 #################################################################################################
 
 
-#start of running to loop to compare all samples
+#start of running loop to compare all samples
 for (i in 1:length(contrasts$Group)){
   coldata_sub = coldata[coldata$Group %in% c(contrasts$Group[i], contrasts$Control[i]),]
   countdata_sub = countdata[, colnames(countdata) %in% coldata_sub$ID]
@@ -362,9 +365,6 @@ for (i in 1:length(contrasts$Group)){
   log2normcounts <- log2(normcounts+1)
   write.csv(log2normcounts, paste0(Output_Normalized_Counts_pslog2,"/",cur_date, "_NormCounts_pslog2_", contrasts$Group[i] , ".csv"), row.names=TRUE)
     
-    
-# calculate the median across the normalized counts
-  #median(normcounts)
 
   
 
@@ -374,16 +374,15 @@ for (i in 1:length(contrasts$Group)){
   # I also needed this here, because genes were being retained that were expressed at values of zero throughout this subset, which didn't allow for SVA
   # But this is actually the more commonly applied approach within DESeq2 examples
   # Here, remove rows with only zeros, or only a single count across all samples:
-    idx <- rowSums(normcounts) > 1     # note that I've also seen a rowMeans > 1 filter applied here
-    CountsAboveBack <- normcounts[idx,]
-    #nrow(CountsAboveBack)
+  idx <- rowSums(normcounts) > 1     # note that I've also seen a rowMeans > 1 filter applied here
+  CountsAboveBack <- normcounts[idx,]
+  #nrow(CountsAboveBack)
     
-    write.csv(CountsAboveBack, paste0(Output_Normalized_Counts_AB,"/", cur_date, "NormCounts_AboveBack_", contrasts$Group[i] ,".csv"), row.names=TRUE)
+  write.csv(CountsAboveBack, paste0(Output_Normalized_Counts_AB,"/", cur_date, "NormCounts_AboveBack_", contrasts$Group[i] ,".csv"), row.names=TRUE)
     
     
-    # Also need to filter in the entire DESeq2 experiment:
-    dds <- dds[ rowSums(counts(dds, normalized=TRUE)) > 1, ]
-  #nrow(dds)
+  # Also need to filter in the entire DESeq2 experiment:
+  dds <- dds[ rowSums(counts(dds, normalized=TRUE)) > 1, ]
 
 
 
@@ -394,22 +393,20 @@ for (i in 1:length(contrasts$Group)){
 #################################################################################################
 #################################################################################################
 
-# Running the differential expression statistical pipeline
-    dds <- DESeq(dds, betaPrior=FALSE)      # because we used a user-defined model matrix, need to set betaPrior=FALSE
-    # This ran a Wald test p-value (Treatment_Tissue = PeatFlame_Heart vs Saline_Heart)
-    
-    resultsNames(dds) #check the available comparisons
-    
-    # Pulling statistical results
-    res <- results(dds, pAdjustMethod = "BH")  #Statistical output with multiple test correction by the default, BH (aka FDR)
-    #head(res)
+  # Running the differential expression statistical pipeline
+  dds <- DESeq(dds, betaPrior=FALSE)      # because we used a user-defined model matrix, need to set betaPrior=FALSE
+  # This ran a Wald test p-value (Treatment_Tissue = PeatFlame_Heart vs Saline_Heart)
     
     
-    # Exporting statistical results:
-    write.csv(as.data.frame(res)[order(res$padj),], paste0(Output_StatResults,"/", cur_date, "Stat_Results_", contrasts$Group[i] ,".csv"))
+  # Pulling statistical results
+  res <- results(dds, pAdjustMethod = "BH")  #Statistical output with multiple test correction by the default, BH (aka FDR)
+  #head(res)
+    
+    
+  # Exporting statistical results:
+  write.csv(as.data.frame(res)[order(res$padj),], paste0(Output_StatResults,"/", cur_date, "Stat_Results_", contrasts$Group[i] ,".csv"))
 
 
-}
 
 
 
@@ -424,22 +421,22 @@ for (i in 1:length(contrasts$Group)){
 ## "Capturing Heterogeneity in Gene Expression Studies by Surrogate Variable Analysis", Jeffrey T Leek,  John D Storey
 
 # First creating an additional experiment to run SVA through
-dds_SVA <- dds
+  dds_SVA <- dds
 
 # Set the model matrix for what's being used to fit the data (minus the SVA variables)
-mod <- model.matrix(~Treatment_Tissue, colData(dds_SVA))
+  mod <- model.matrix(~Group, colData(dds_SVA))
 
 
 # Set the null model matrix being compared against when fitting the data for the SVA analysis
-mod0 <- model.matrix( ~1, colData(dds_SVA))
+  mod0 <- model.matrix( ~1, colData(dds_SVA))
 
 
 # Calculated the number of significant surrogate variables, using the following code:
-svseq <- svaseq(CountsAboveBack, mod, mod0, n.sv=NULL)  
+  svseq <- svaseq(CountsAboveBack, mod, mod0, n.sv=NULL)  
 # Here, we derive 4 significant SVs
 
 # Running SVA, here, using number of SVs = 4
-svseq <- svaseq(CountsAboveBack, mod, mod0, n.sv=4)
+  svseq <- svaseq(CountsAboveBack, mod, mod0, n.sv=4)
 
 
 #################
@@ -447,18 +444,18 @@ svseq <- svaseq(CountsAboveBack, mod, mod0, n.sv=4)
 #################
 
 
-dds_SVA$SV1 <- svseq$sv[,1]
-dds_SVA$SV2 <- svseq$sv[,2]
-dds_SVA$SV3 <- svseq$sv[,3]
-dds_SVA$SV4 <- svseq$sv[,4]
-design(dds_SVA) <- ~ SV1 + SV2 + SV3 + SV4 + Treatment_Tissue
+  dds_SVA$SV1 <- svseq$sv[,1]
+  dds_SVA$SV2 <- svseq$sv[,2]
+  dds_SVA$SV3 <- svseq$sv[,3]
+  dds_SVA$SV4 <- svseq$sv[,4]
+  design(dds_SVA) <- ~ SV1 + SV2 + SV3 + SV4 + Group
 
 
 # Export variance stabilized counts, which will be influenced by the new design above
 # vsd will be useful for plots and future figure generation
-vsd <- varianceStabilizingTransformation(dds_SVA, blind=FALSE)
-vsd_matrix <-as.matrix(assay(vsd))
-write.csv(vsd_matrix, paste0(Output,"/", "VSDCounts_w_SVAs.csv"), row.names=TRUE)
+  vsd <- varianceStabilizingTransformation(dds_SVA, blind=FALSE)
+  vsd_matrix <-as.matrix(assay(vsd))
+  write.csv(vsd_matrix, paste0(Output_VSD,"/", cur_date, "VSDCounts_w_SVAs", contrasts$Group[i] ,".csv"), row.names=TRUE)
 
 
 
@@ -466,14 +463,14 @@ write.csv(vsd_matrix, paste0(Output,"/", "VSDCounts_w_SVAs.csv"), row.names=TRUE
 #### Evaluating variance stabilized values to guage whether SVs accounted for unwanted sources of variation between samples
 #################
 
-plotPCA(vsd, intgroup="Treatment", returnData=FALSE)
-plotPCA(vsd, intgroup="Tissue", returnData=FALSE)
-plotPCA(vsd, intgroup="Treatment_Tissue", returnData=FALSE)
-
-plotPCA(vsd, intgroup="SV1", returnData=FALSE)
-plotPCA(vsd, intgroup="SV2", returnData=FALSE)
-plotPCA(vsd, intgroup="SV3", returnData=FALSE)
-plotPCA(vsd, intgroup="SV4", returnData=FALSE)
+  #plotPCA(vsd, intgroup="Treatment", returnData=FALSE)
+  #plotPCA(vsd, intgroup="Tissue", returnData=FALSE)
+  #plotPCA(vsd, intgroup="Group", returnData=FALSE)
+  
+  #plotPCA(vsd, intgroup="SV1", returnData=FALSE)
+  #plotPCA(vsd, intgroup="SV2", returnData=FALSE)
+  #plotPCA(vsd, intgroup="SV3", returnData=FALSE)
+  #plotPCA(vsd, intgroup="SV4", returnData=FALSE)
 
 
 #In sum, it looks like the SVs are potentially accounting for a lot of the unwanted variation
@@ -487,15 +484,15 @@ plotPCA(vsd, intgroup="SV4", returnData=FALSE)
 #################################################################################################
 
 # Running the differential expression statistical pipeline
-dds_SVA <- DESeq(dds_SVA, betaPrior=FALSE)
-
-resultsNames(dds_SVA) #check the available comparisons
+  dds_SVA <- DESeq(dds_SVA, betaPrior=FALSE)
+  
+  #resultsNames(dds_SVA) #check the available comparisons
 
 # Pulling statistical results
-res <- results(dds_SVA, pAdjustMethod = "BH")
-head(res)
+  res <- results(dds_SVA, pAdjustMethod = "BH")
+  #head(res)
 
 
 # Exporting statistical results:
-write.csv(as.data.frame(res)[order(res$padj),], paste0(Output,"/", "Stat_Results_w_SVA.csv"))
+  write.csv(as.data.frame(res)[order(res$padj),], paste0(Output_StatResults_SVA,"/", cur_date, "Stat_Results_w_SVA", contrasts$Group[i] ,".csv"))
 }
