@@ -93,7 +93,7 @@ Output_Normalized_Counts_AB = "/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payto
 Output_StatResults = "/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/1_DeSeq2/1_miRNA_DeSeq2/2_Output/4_StatResults"
 Output_VSD = "/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/1_DeSeq2/1_miRNA_DeSeq2/2_Output/5_VSD_w_SVA"
 Output_StatResults_SVA = "/Users/alexis/IEHS Dropbox/Rager Lab/Alexis_Payton/2_Wildfire_Analysis/1_DeSeq2/1_miRNA_DeSeq2/2_Output/6_StatResults_w_SVA"
-cur_date = "123120"
+cur_date = "010421"
 
 #################################################################################################
 #################################################################################################
@@ -104,7 +104,7 @@ cur_date = "123120"
 
 
 # Read in count data
-countdata <- read.csv(file = 'mouse_miRNA_count.csv', check.names = FALSE)
+countdata <- read.csv(file = '201209_UNC32-K00270_0265_AHJ55WBBXY_human_miRNA_counts.csv', check.names = FALSE)
 dim(countdata)
 # 18 samples, 348 miRNAs
 
@@ -118,7 +118,7 @@ summary(Dups)
 
 
 # Read in metadata (sample information file)
-subjectinfo <- read.csv(file = "Sample_Info_123120.csv", check.names = FALSE)
+subjectinfo <- read.csv(file = "Sample_Info_Human_010421.csv", check.names = FALSE)
 dim(subjectinfo) #18 rows, 5 col
 
 # Visualize this data quickly by viewing top left corner:
@@ -186,10 +186,10 @@ pca_df <- merge(pca_df, coldata, by.x="Sample", by.y="ID")
 pca_percent <- round(100*pca$sdev^2/sum(pca$sdev^2),1)
 
 # Generating PCA plot annotated by mouse ID
-ggplot(pca_df, aes(PC1,PC2, color = MouseID))+
+ggplot(pca_df, aes(PC1,PC2, color = MediaID))+
   geom_point(size=6) +
   labs(x=paste0("PC1 (",pca_percent[1],"%)"), y=paste0("PC2 (",pca_percent[2],"%)"))
-dev.copy(png,paste0(Output,"/", cur_date,"PCA_MouseID.png"))
+dev.copy(png,paste0(Output,"/", cur_date,"PCA_MediaID.png"))
 dev.off()
 
 # Generating PCA plot annotated by treatment 
@@ -209,7 +209,7 @@ ggplot(pca_df, aes(PC1,PC2))+
   labs(x=paste0("PC1 (",pca_percent[1],"%)"), y=paste0("PC2 (",pca_percent[2],"%)"))
 dev.copy(png,paste0(Output,"/", cur_date,"PCA_IDsLabeled.png"))
 dev.off()
- 
+
 # We will conduct heirachical clustering to investigate further and to determine if we should remove these samples
 
 
@@ -297,36 +297,35 @@ sapply(countdata, class)
 #################################################################################################
 
 
-treatment_groups = c('RedOakSmolder', 'PeatSmolder')
 
-#start of running loop to compare all samples
-for (i in 1:length(treatment_groups)){
-  coldata_sub = coldata[coldata$Treatment %in% c(treatment_groups[i], 'Saline'),] #getting saline samples with corresponding tx
-  countdata_sub = countdata[, colnames(countdata) %in% coldata_sub$ID]
+
+
+coldata_sub = coldata[coldata$Treatment %in% c('Diesel Exhaust Particles', 'Vehicle Control'),] #getting saline samples with corresponding tx
+countdata_sub = countdata[, colnames(countdata) %in% coldata_sub$ID]
   
   
   # Create the final DESeq2 experiment, with appropriate experimental design:
   # Note in the design: last factor indicates the factor we want to test the effect of; the first factor(s) = factors we want to control for
   # Note that in this particular experiment, it gives us a warning that we are using integer data as numeric variables - this is what we want for some variables
   
-  dds = DESeqDataSetFromMatrix(countData = countdata_sub,
+dds = DESeqDataSetFromMatrix(countData = countdata_sub,
                                colData = coldata_sub,
                                design = ~Treatment)
   
   # View what the experiment contains
-  #dds
+dds
   
   
   
   # Let's also make sure that we have the main contrast is in the order we want to calculate appropriate fold change values
-  dds$Treatment <- relevel (dds$Treatment, "Saline")
+dds$Treatment <- relevel (dds$Treatment, "Vehicle Control")
   
   
   
   # Need to next, estimate the size factors, since size factors are used to normalize the counts (next step)
   # The "iterate" estimator iterates between estimating the dispersion with a design of ~1, and finding a size factor vector by numerically optimizing the likelihood of the ~1 model.
-  dds <- estimateSizeFactors(dds)
-  #sizeFactors(dds) #check size factors
+dds <- estimateSizeFactors(dds)
+sizeFactors(dds) #check size factors
   
   
   #################################################################################################
@@ -339,14 +338,14 @@ for (i in 1:length(treatment_groups)){
   
   
   # normalized counts:
-  normcounts<- counts(dds, normalized=TRUE)
+normcounts<- counts(dds, normalized=TRUE)
   
-  write.csv(normcounts, paste0(Output_Normalized_Counts,"/",cur_date, "_NormCounts_", treatment_groups[i] ,".csv"), row.names=TRUE)
+write.csv(normcounts, paste0(Output_Normalized_Counts,"/",cur_date, "_NormCounts_", 'Diesel Exhaust Particles' ,".csv"), row.names=TRUE)
   
   
   # log2 pseudocounts (y=log2(n+1))
-  log2normcounts <- log2(normcounts+1)
-  write.csv(log2normcounts, paste0(Output_Normalized_Counts_pslog2,"/",cur_date, "_NormCounts_pslog2_", treatment_groups[i] , ".csv"), row.names=TRUE)
+log2normcounts <- log2(normcounts+1)
+write.csv(log2normcounts, paste0(Output_Normalized_Counts_pslog2,"/",cur_date, "_NormCounts_pslog2_", 'Diesel Exhaust Particles' , ".csv"), row.names=TRUE)
   
   
   
@@ -357,15 +356,15 @@ for (i in 1:length(treatment_groups)){
   # I also needed this here, because genes were being retained that were expressed at values of zero throughout this subset, which didn't allow for SVA
   # But this is actually the more commonly applied approach within DESeq2 examples
   # Here, remove rows with only zeros, or only a single count across all samples:
-  idx <- rowSums(normcounts) > 1     # note that I've also seen a rowMeans > 1 filter applied here
-  CountsAboveBack <- normcounts[idx,]
+idx <- rowSums(normcounts) > 1     # note that I've also seen a rowMeans > 1 filter applied here
+CountsAboveBack <- normcounts[idx,]
   #nrow(CountsAboveBack)
   
-  write.csv(CountsAboveBack, paste0(Output_Normalized_Counts_AB,"/", cur_date, "NormCounts_AboveBack_", treatment_groups[i] ,".csv"), row.names=TRUE)
+write.csv(CountsAboveBack, paste0(Output_Normalized_Counts_AB,"/", cur_date, "NormCounts_AboveBack_", 'Diesel Exhaust Particles' ,".csv"), row.names=TRUE)
   
   
   # Also need to filter in the entire DESeq2 experiment:
-  dds <- dds[ rowSums(counts(dds, normalized=TRUE)) > 1, ]
+dds <- dds[ rowSums(counts(dds, normalized=TRUE)) > 1, ]
   
   
   
@@ -377,17 +376,17 @@ for (i in 1:length(treatment_groups)){
   #################################################################################################
   
   # Running the differential expression statistical pipeline
-  dds <- DESeq(dds, betaPrior=FALSE)      # because we used a user-defined model matrix, need to set betaPrior=FALSE
+dds <- DESeq(dds, betaPrior=FALSE)      # because we used a user-defined model matrix, need to set betaPrior=FALSE
   # This ran a Wald test p-value (Treatment_Tissue = PeatFlame_Heart vs Saline_Heart)
   
   
   # Pulling statistical results
-  res <- results(dds, pAdjustMethod = "BH")  #Statistical output with multiple test correction by the default, BH (aka FDR)
-  #head(res)
+res <- results(dds, pAdjustMethod = "BH")  #Statistical output with multiple test correction by the default, BH (aka FDR)
+head(res)
   
   
   # Exporting statistical results:
-  write.csv(as.data.frame(res)[order(res$padj),], paste0(Output_StatResults,"/", cur_date, "Stat_Results_", treatment_groups[i] ,".csv"))
+write.csv(as.data.frame(res)[order(res$padj),], paste0(Output_StatResults,"/", cur_date, "Stat_Results_", 'Diesel Exhaust Particles' ,".csv"))
   
   
   
@@ -403,22 +402,22 @@ for (i in 1:length(treatment_groups)){
   ## "Capturing Heterogeneity in Gene Expression Studies by Surrogate Variable Analysis", Jeffrey T Leek,  John D Storey
   
   # First creating an additional experiment to run SVA through
-  dds_SVA <- dds
+dds_SVA <- dds
   
   # Set the model matrix for what's being used to fit the data (minus the SVA variables)
-  mod <- model.matrix(~Treatment, colData(dds_SVA))
+mod <- model.matrix(~Treatment, colData(dds_SVA))
   
   
   # Set the null model matrix being compared against when fitting the data for the SVA analysis
-  mod0 <- model.matrix( ~1, colData(dds_SVA))
+mod0 <- model.matrix( ~1, colData(dds_SVA))
   
   
   # Calculated the number of significant surrogate variables, using the following code:
-  svseq <- svaseq(CountsAboveBack, mod, mod0, n.sv=NULL)  
+svseq <- svaseq(CountsAboveBack, mod, mod0, n.sv=NULL)  
   # Here, we derive 4 significant SVs
   
   # Running SVA, here, using number of SVs = 4
-  svseq <- svaseq(CountsAboveBack, mod, mod0, n.sv=4)
+svseq <- svaseq(CountsAboveBack, mod, mod0, n.sv=4)
   
   
   #################
@@ -437,7 +436,7 @@ for (i in 1:length(treatment_groups)){
   # vsd will be useful for plots and future figure generation
   vsd <- varianceStabilizingTransformation(dds_SVA, blind=FALSE)
   vsd_matrix <-as.matrix(assay(vsd))
-  write.csv(vsd_matrix, paste0(Output_VSD,"/", cur_date, "VSDCounts_w_SVAs", treatment_groups[i] ,".csv"), row.names=TRUE)
+  write.csv(vsd_matrix, paste0(Output_VSD,"/", cur_date, "VSDCounts_w_SVAs", 'Diesel Exhaust Particles' ,".csv"), row.names=TRUE)
   
   
   
@@ -456,8 +455,8 @@ for (i in 1:length(treatment_groups)){
   
   
   #In sum, it looks like the SVs are potentially accounting for a lot of the unwanted variation
-
-
+  
+  
   #################################################################################################
   #################################################################################################
   #### Statistical analysis to detect significantly differentially expressed genes, now including surrogate variables
@@ -475,6 +474,6 @@ for (i in 1:length(treatment_groups)){
   
   
   # Exporting statistical results:
-  write.csv(as.data.frame(res)[order(res$padj),], paste0(Output_StatResults_SVA,"/", cur_date, "Stat_Results_w_SVA", treatment_groups[i] ,".csv"))
-}
+  write.csv(as.data.frame(res)[order(res$padj),], paste0(Output_StatResults_SVA,"/", cur_date, "Stat_Results_w_SVA", 'Diesel Exhaust Particles' ,".csv"))
+
 
