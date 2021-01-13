@@ -1,7 +1,11 @@
 # Wildfire_mice
-> This research investigates the impact of wildfire smoke exposure from various biofuels (Peat, RedOak, Saline, Pine, and Eucalyptus) on heart and lung genes in addition to plasma miRNAs in mice
+> This research investigates the impact of wildfire smoke exposure on the genome and epigenome
 
-> The dates indicate when the original file was created
+
+# Mice_Heart_Lung_mRNA_DeSeq2
+> identifies mRNAs associated with wildfire smoke exposure (Peat, RedOak, Saline, Pine, or Eucalyptus) under two burn conditions (flame or smolder) on heart and lung tissue in mice
+
+
 
 ## DeSeq2 Analysis
 - filters lowly expressed genes or miRNAs
