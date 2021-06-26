@@ -1,4 +1,4 @@
-## Mice_Heart_Lung_mRNA_DeSeq2
+## Mice_mRNA_heart_lung
 > identifies mRNAs associated with wildfire smoke exposure (Peat, Red Oak, Saline, Pine, or Eucalyptus) under two burn conditions (flame or smolder) on heart and lung tissue in mice
 
 
